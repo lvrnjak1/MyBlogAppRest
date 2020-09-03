@@ -75,28 +75,33 @@ function Post(props) {
     return day + "." + month + "." + year + " " + hours + ":" + minutes;
   };
 
-  //   const [toggleLike] = useMutation(Constants.TOGGLE_LIKE, {
-  //     onCompleted(data) {
-  //       setLikes(data.post.numberOfLikes);
-  //       setLikeButtonText(likeButtonText === "Like" ? "Dislike" : "Like");
-  //     },
-  //   });
-
   const handleLike = async (e) => {
-    //     e.preventDefault();
-    //     //await toggleLike({ variables: { postId: id } });
+    e.preventDefault();
+    await API.put(
+      `/posts/${id}/like`,
+      {},
+      {
+        headers: getHeadersObject(),
+      }
+    );
+
+    setLikeButtonText(likeButtonText === "Like" ? "Dislike" : "Like");
+    const response2 = await API.get(`/posts/${id}`, {
+      headers: getHeadersObject(),
+    });
+    setLikes(response2.data.numberOfLikes);
   };
 
   const handleEdit = (e) => {
-    //     setEditing(!editing);
-    //     props.handleEdit(e, id, titleEdited, bodyEdited, update);
+    setEditing(!editing);
+    props.handleEdit(e, id, titleEdited, bodyEdited, update);
   };
 
-  //   const update = (newTitle, newBody, newEdited) => {
-  //     setTitle(newTitle);
-  //     setBody(newBody);
-  //     setEdited(newEdited);
-  //   };
+  const update = (newTitle, newBody, newEdited) => {
+    setTitle(newTitle);
+    setBody(newBody);
+    setEdited(newEdited);
+  };
 
   const handleOpenLikes = async () => {
     const response = await API.get(`/posts/${id}/likes`, {

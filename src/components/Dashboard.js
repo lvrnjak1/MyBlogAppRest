@@ -38,7 +38,7 @@ function Dashboard(props) {
         <Container maxWidth="lg">
           <Grid container spacing={5}>
             <Grid item xs={8}>
-              {/* <NewPost></NewPost> */}
+              <NewPost></NewPost>
               <br></br>
               <div>
                 <GridList cellhight="auto" cols={1}>
@@ -51,7 +51,7 @@ function Dashboard(props) {
               </div>
             </Grid>
             <Grid item xs={4}>
-              {/* <Search></Search> */}
+              <Search></Search>
             </Grid>
           </Grid>
         </Container>

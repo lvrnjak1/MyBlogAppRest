@@ -111,13 +111,6 @@ export default function SignUp(props) {
     setErrorMessage("");
   };
 
-  const update = (cache, data) => {
-    saveUserData(data.data.account.account);
-    saveUserToken(data.data.account.token);
-    auth.login();
-    props.history.push("/dashboard");
-  };
-
   const handleError = (errorMessage) => {
     setErrorMessage(errorMessage);
   };

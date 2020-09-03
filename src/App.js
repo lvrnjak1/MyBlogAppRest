@@ -19,7 +19,7 @@ export default function App() {
           render={(props) => <Register {...props}></Register>}
         />
         <ProtectedRoute path="/dashboard" exact component={Dashboard} />
-        {/* <ProtectedRoute path="/profile/:username" exact component={Profile} /> */}
+        <ProtectedRoute path="/profile/:username" exact component={Profile} />
         <Route path="*" component={() => "404 NOT FOUND"} />
       </Switch>
     </Router>
