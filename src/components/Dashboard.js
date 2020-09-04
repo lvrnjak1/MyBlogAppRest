@@ -20,7 +20,6 @@ function Dashboard(props) {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
-      //console.log(response);
       setFeedPosts(response.data);
     };
 

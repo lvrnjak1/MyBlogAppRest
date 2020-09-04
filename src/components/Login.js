@@ -61,7 +61,7 @@ export default function SignIn(props) {
       setErrorMessage("");
       saveUserToken(response.data.token);
       auth.login();
-      const response2 = await API.get("/accounts", {
+      const response2 = await API.get("/accounts/myAccount", {
         headers: {
           Authorization: `Bearer ${response.data.token}`,
         },
