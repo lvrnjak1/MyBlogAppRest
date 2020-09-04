@@ -5,12 +5,10 @@ class Auth {
 
   login() {
     this.authenticated = true;
-    //cb();
   }
 
   logout() {
     this.authenticated = false;
-    //cb();
   }
 
   isAuthenticated() {

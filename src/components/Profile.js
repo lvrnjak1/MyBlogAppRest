@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ProfileSnippet from "./ProfileSnippet";
 import NewPost from "./NewPost";
 import Post from "./Post";
@@ -10,7 +10,8 @@ import Container from "@material-ui/core/Container";
 import AccountList from "./AccountList";
 import "../css/style.css";
 import LikeList from "./LikeList.js";
-import { getUser } from "./Utils";
+import { getUser, getHeadersObject } from "./Utils";
+import Api from "../Api";
 
 //create your forceUpdate hook
 function useForceUpdate() {
@@ -20,6 +21,9 @@ function useForceUpdate() {
 
 export default function Profile(props) {
   const [account, setAccount] = useState({});
+  const [posts, setPosts] = useState([]);
+  const [followers, setFollowers] = useState([]);
+  const [following, setFollowing] = useState([]);
   const forceUpdate = useForceUpdate();
   const [modalOpened, setModalOpened] = useState(false);
   const [modalId, setModalId] = useState(null);
@@ -30,77 +34,88 @@ export default function Profile(props) {
     setModalOpened(true);
   };
 
+  useEffect(() => {
+    const getAccountById = async () => {
+      const username = props.match.params.username;
+      Api.get(`accounts?username=${username}`, {
+        headers: getHeadersObject(),
+      })
+        .then(async (response) => {
+          console.log(response);
+          setAccount(response.data);
+          const id = response.data.id;
+
+          const response2 = await Api.get(`/accounts/${id}/posts`, {
+            headers: getHeadersObject(),
+          });
+          console.log(response2);
+          setPosts(response2.data);
+
+          const response3 = await Api.get(`/accounts/${id}/followers`, {
+            headers: getHeadersObject(),
+          });
+          console.log(response3);
+          setFollowers(response3.data);
+
+          const response4 = await Api.get(`/accounts/${id}/following`, {
+            headers: getHeadersObject(),
+          });
+          console.log(response4);
+          setFollowing(response4.data);
+        })
+        .catch((error) => {
+          props.history.push("/dashboard");
+        });
+    };
+
+    getAccountById();
+  }, [props.match.params.username]);
+
   const handleDeletePost = async (e, id) => {
-    // e.preventDefault();
-    // await deletePost({
-    //   variables: { postId: id },
-    // }).then((res) => {
-    //   if (res.data.status.success) {
-    //     setAccount({
-    //       ...account,
-    //       posts: account.posts.filter((post) => post.id !== id),
-    //     });
-    //   }
-    // });
+    e.preventDefault();
+    Api.delete(`/posts/${id}`, { headers: getHeadersObject() }).then((res) => {
+      setPosts(posts.filter((post) => post.id !== id));
+    });
   };
 
   const handleEditPost = async (e, postId, newTitle, newBody, callback) => {
-    // e.preventDefault();
-    // await editPost({
-    //   variables: {
-    //     postId,
-    //     newTitle,
-    //     newBody,
-    //   },
-    // })
-    //   .then((res) => {
-    //     let newPosts = account.posts.slice();
-    //     let index = newPosts.findIndex((post) => post.id === res.data.post.id);
-    //     newPosts[index].title = res.data.post.title;
-    //     newPosts[index].body = res.data.post.body;
-    //     newPosts[index].edited = res.data.post.edited;
-    //     setAccount({
-    //       ...account,
-    //       posts: newPosts,
-    //     });
-    //   })
-    //   .then(() => {
-    //     callback(newTitle, newBody, true);
-    //   });
+    e.preventDefault();
+    await Api.put(
+      `/posts/${postId}`,
+      {
+        title: newTitle,
+        body: newBody,
+      },
+      {
+        headers: getHeadersObject(),
+      }
+    ).then((res) => {
+      let newPosts = posts.slice();
+      let index = newPosts.findIndex((post) => post.id === postId);
+      newPosts[index].title = res.data.title;
+      newPosts[index].body = res.data.body;
+      newPosts[index].edited = res.data.edited;
+      setPosts(newPosts);
+      callback(newTitle, newBody, true);
+    });
   };
 
   const handleNewPost = (post) => {
-    // let newPosts = account.posts;
-    // newPosts.unshift(post);
-    // setAccount({ ...account, posts: newPosts });
-    // forceUpdate();
+    let newPosts = posts;
+    newPosts.unshift(post);
+    setPosts(newPosts);
+    forceUpdate();
   };
-
-  //   const { loading, error, data } = useQuery(Constants.GET_ACCOUNT_BY_USERNAME, {
-  //     variables: {
-  //       //accountId: props.location.state.id,
-  //       username: props.match.params.username,
-  //     },
-  //     onCompleted(data) {
-  //       setAccount(data.account);
-  //       forceUpdate();
-  //     },
-  //     onError(error) {
-  //       //hmm
-  //       props.history.push("/dashboard");
-  //     },
-  //   });
 
   const toggleIsFollowed = () => {
     setAccount({
       ...account,
-      isFollowedByLoggedInAccount: !account.isFollowedByLoggedInAccount,
+      followedByLoggedInAccount: !account.followedByLoggedInAccount,
     });
   };
 
   return (
     <div>
-      {/* {!account.user || loading || error ? null : ( */}
       <div>
         <Header {...props} dashboard={false}></Header>
         {modalOpened ? (
@@ -116,7 +131,7 @@ export default function Profile(props) {
           <Container maxWidth="lg">
             <Grid container spacing={5}>
               <Grid item xs={8}>
-                {props.match.params.username === currentUser.user.username ? (
+                {props.match.params.username === currentUser.username ? (
                   <div>
                     <NewPost callback={handleNewPost}></NewPost>
                     <br></br>
@@ -125,25 +140,23 @@ export default function Profile(props) {
                   ""
                 )}
                 <GridList cellHeight="auto" cols={1}>
-                  {account.posts.length > 0 ? (
-                    account.posts.map((post) => {
-                      post["author"] = {
+                  {posts.length > 0 ? (
+                    posts.map((post) => {
+                      const author = {
                         id: account.id,
                         name: account.name,
                         surname: account.surname,
-                        user: {
-                          username: account.user.username,
-                        },
+                        username: account.username,
                       };
                       return (
                         <GridListTile key={post.id}>
                           <Post
                             post={post}
+                            author={author}
                             deleteOption={
                               props.match.params.username ===
-                              currentUser.user.username
+                              currentUser.username
                             }
-                            // deleteOption={props.location.state.isMyProfile}
                             handleDelete={handleDeletePost}
                             handleEdit={handleEditPost}
                             openLikesList={openModal}
@@ -162,38 +175,36 @@ export default function Profile(props) {
                     id: account.id,
                     name: account.name,
                     surname: account.surname,
-                    username: account.user.username,
-                    email: account.user.email,
+                    username: account.username,
+                    email: account.email,
                     bio: account.bio,
                     following: account.numberOfFollowing,
                     followers: account.numberOfFollowers,
-                    isFollowedByLoggedInAccount:
-                      account.isFollowedByLoggedInAccount,
+                    followedByLoggedInAccount:
+                      account.followedByLoggedInAccount,
                   }}
-                  // isMyProfile={props.location.state.isMyProfile}
                   isMyProfile={
-                    props.match.params.username === currentUser.user.username
+                    props.match.params.username === currentUser.username
                   }
                   toggleIsFollowed={toggleIsFollowed}
                 ></ProfileSnippet>
                 <br></br>
                 <AccountList
-                  list={data.account.followers}
+                  list={followers}
                   title="Followers"
-                  count={data.account.numberOfFollowers}
+                  count={account.numberOfFollowers}
                 ></AccountList>
                 <br></br>
                 <AccountList
-                  list={data.account.following}
+                  list={following}
                   title="Following"
-                  count={data.account.numberOfFollowing}
+                  count={account.numberOfFollowing}
                 ></AccountList>
               </Grid>
             </Grid>
           </Container>
         </div>
       </div>
-      {/* )} */}
     </div>
   );
 }

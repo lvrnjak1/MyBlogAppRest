@@ -59,8 +59,11 @@ function Post(props) {
       });
       setAuthor(response.data);
     };
-
-    getAuthor();
+    if (!props.author) {
+      getAuthor();
+    } else {
+      setAuthor(props.author);
+    }
   }, []);
 
   const stringFromDate = (d) => {

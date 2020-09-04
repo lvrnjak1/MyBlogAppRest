@@ -40,7 +40,7 @@ function Header(props) {
   };
 
   const goToMyProfile = () => {
-    props.history.push("/profile/" + account.user.username, {
+    props.history.push("/profile/" + account.username, {
       isMyProfile: true,
       id: account.id,
     });
